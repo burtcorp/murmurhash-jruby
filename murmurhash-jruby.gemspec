@@ -19,6 +19,4 @@ Gem::Specification.new do |spec|
   spec.files = Dir['lib/**/*.{rb,jar}'] + Dir['bin/*'] + %w[LICENSE.txt README.md]
   spec.executables = %w[]
   spec.require_paths = %w[lib]
-
-  spec.add_development_dependency 'bundler', '~> 1.11'
 end
