@@ -17,6 +17,8 @@ import org.jruby.util.ByteList;
 public class MurmurHash3 extends RubyObject {
   private static int DEFAULT_SEED = 1923944541;
 
+  private int seed = DEFAULT_SEED;
+
   public static RubyClass createRubyClass(Ruby runtime, RubyModule parentModule) {
     RubyClass klass = runtime.defineClassUnder("MurmurHash3", runtime.getObject(), ALLOCATOR, parentModule);
     klass.defineAnnotatedMethods(MurmurHash3.class);
@@ -34,13 +36,30 @@ public class MurmurHash3 extends RubyObject {
     super(runtime, type);
   }
 
-  @JRubyMethod(required = 1, optional = 1)
-  public IRubyObject hash64(final ThreadContext ctx, final IRubyObject[] args) {
+  @JRubyMethod(optional = 1)
+  public IRubyObject initialize(final ThreadContext ctx, final IRubyObject[] args) {
+    if (args.length > 0 && !args[0].isNil()) {
+      this.seed = (int) args[0].convertToInteger().getLongValue();
+    }
+    return this;
+  }
+
+  @JRubyMethod(required = 1)
+  public IRubyObject hash64(final ThreadContext ctx, final IRubyObject arg) {
+    final RubyString input = arg.convertToString();
+    final ByteList bytes = input.getByteList();
+    final LongPair result = new LongPair();
+    murmurhash3_x64_128(bytes.unsafeBytes(), bytes.begin(), bytes.length(), seed, result);
+    return RubyFixnum.newFixnum(ctx.runtime, result.val1);
+  }
+
+  @JRubyMethod(module = true, required = 1, optional = 1)
+  public static IRubyObject hash64(final ThreadContext ctx, final IRubyObject recv, final IRubyObject[] args) {
     final RubyString input = args[0].convertToString();
     final ByteList bytes = input.getByteList();
     final LongPair result = new LongPair();
     int seed = DEFAULT_SEED;
-    if (args.length > 1 && args[1] != null && !args[1].isNil()) {
+    if (args.length > 1 && !args[1].isNil()) {
       seed = (int) args[1].convertToInteger().getLongValue();
     }
     murmurhash3_x64_128(bytes.unsafeBytes(), bytes.begin(), bytes.length(), seed, result);
@@ -71,7 +90,7 @@ public class MurmurHash3 extends RubyObject {
     public long val2;
   }
 
-  private int fmix32(int h) {
+  private static int fmix32(int h) {
     h ^= h >>> 16;
     h *= 0x85ebca6b;
     h ^= h >>> 13;
@@ -80,7 +99,7 @@ public class MurmurHash3 extends RubyObject {
     return h;
   }
 
-  private long fmix64(long k) {
+  private static long fmix64(long k) {
     k ^= k >>> 33;
     k *= 0xff51afd7ed558ccdL;
     k ^= k >>> 33;
@@ -90,7 +109,7 @@ public class MurmurHash3 extends RubyObject {
   }
 
   /** Gets a long from a byte buffer in little endian byte order. */
-  private long getLongLittleEndian(byte[] buf, int offset) {
+  private static long getLongLittleEndian(byte[] buf, int offset) {
     return ((long)buf[offset+7]          << 56) // no mask needed
               | ((buf[offset+6] & 0xffL) << 48)
               | ((buf[offset+5] & 0xffL) << 40)
@@ -102,7 +121,7 @@ public class MurmurHash3 extends RubyObject {
   }
 
   /** Returns the MurmurHash3_x86_32 hash. */
-  private int murmurhash3_x86_32(byte[] data, int offset, int len, int seed) {
+  private static int murmurhash3_x86_32(byte[] data, int offset, int len, int seed) {
     final int c1 = 0xcc9e2d51;
     final int c2 = 0x1b873593;
 
@@ -153,7 +172,7 @@ public class MurmurHash3 extends RubyObject {
   }
 
   /** Returns the MurmurHash3_x64_128 hash, placing the result in "out". */
-  private void murmurhash3_x64_128(byte[] key, int offset, int len, int seed, LongPair out) {
+  private static void murmurhash3_x64_128(byte[] key, int offset, int len, int seed, LongPair out) {
     // The original algorithm does have a 32 bit unsigned seed.
     // We have to mask to match the behavior of the unsigned types and prevent sign extension.
     long h1 = seed & 0x00000000FFFFFFFFL;
