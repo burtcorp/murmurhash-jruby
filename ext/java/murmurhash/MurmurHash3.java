@@ -52,76 +52,69 @@ public class MurmurHash3 extends RubyObject {
 
   @JRubyMethod(required = 1)
   public IRubyObject hash32(final ThreadContext ctx, final IRubyObject arg) {
-    final RubyString input = arg.convertToString();
-    final ByteList bytes = input.getByteList();
-    final int result = murmurhash3_x86_32(bytes.unsafeBytes(), bytes.begin(), bytes.length(), seed);
-    return RubyFixnum.newFixnum(ctx.runtime, result);
+    return _hash32(ctx.runtime, arg.convertToString(), seed);
   }
 
   @JRubyMethod(module = true, required = 1, optional = 1)
   public static IRubyObject hash32(final ThreadContext ctx, final IRubyObject recv, final IRubyObject[] args) {
-    final RubyString input = args[0].convertToString();
-    final ByteList bytes = input.getByteList();
     int seed = DEFAULT_SEED;
     if (args.length > 1 && !args[1].isNil()) {
       seed = (int) args[1].convertToInteger().getLongValue();
     }
+    return _hash32(ctx.runtime, args[0].convertToString(), seed);
+  }
+
+  private static IRubyObject _hash32(final Ruby runtime, final RubyString input, final int seed) {
+    final ByteList bytes = input.getByteList();
     final int result = murmurhash3_x86_32(bytes.unsafeBytes(), bytes.begin(), bytes.length(), seed);
-    return RubyFixnum.newFixnum(ctx.runtime, result);
+    return RubyFixnum.newFixnum(runtime, result);
   }
 
   @JRubyMethod(required = 1)
   public IRubyObject hash64(final ThreadContext ctx, final IRubyObject arg) {
-    final RubyString input = arg.convertToString();
-    final ByteList bytes = input.getByteList();
-    final LongPair result = new LongPair();
-    murmurhash3_x64_128(bytes.unsafeBytes(), bytes.begin(), bytes.length(), seed, result);
-    return RubyFixnum.newFixnum(ctx.runtime, result.val1);
+    return _hash64(ctx.runtime, arg.convertToString(), seed);
   }
 
   @JRubyMethod(module = true, required = 1, optional = 1)
   public static IRubyObject hash64(final ThreadContext ctx, final IRubyObject recv, final IRubyObject[] args) {
-    final RubyString input = args[0].convertToString();
-    final ByteList bytes = input.getByteList();
-    final LongPair result = new LongPair();
     int seed = DEFAULT_SEED;
     if (args.length > 1 && !args[1].isNil()) {
       seed = (int) args[1].convertToInteger().getLongValue();
     }
+    return _hash64(ctx.runtime, args[0].convertToString(), seed);
+  }
+
+  private static IRubyObject _hash64(Ruby runtime, final RubyString input, final int seed) {
+    final ByteList bytes = input.getByteList();
+    final LongPair result = new LongPair();
     murmurhash3_x64_128(bytes.unsafeBytes(), bytes.begin(), bytes.length(), seed, result);
-    return RubyFixnum.newFixnum(ctx.runtime, result.val1);
+    return RubyFixnum.newFixnum(runtime, result.val1);
   }
 
   @JRubyMethod(required = 1)
   public IRubyObject hash128(final ThreadContext ctx, final IRubyObject arg) {
-    final RubyString input = arg.convertToString();
-    final ByteList bytes = input.getByteList();
-    final LongPair result = new LongPair();
-    final ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES * 2);
-    murmurhash3_x64_128(bytes.unsafeBytes(), bytes.begin(), bytes.length(), seed, result);
-    buffer.order(ByteOrder.LITTLE_ENDIAN);
-    buffer.putLong(result.val1);
-    buffer.putLong(result.val2);
-    buffer.flip();
-    return RubyBignum.newBignum(ctx.runtime, new BigInteger(buffer.array()));
+    return _hash128(ctx.runtime, arg.convertToString(), seed);
   }
 
   @JRubyMethod(module = true, required = 1, optional = 1)
   public static IRubyObject hash128(final ThreadContext ctx, final IRubyObject recv, final IRubyObject[] args) {
-    final RubyString input = args[0].convertToString();
-    final ByteList bytes = input.getByteList();
-    final LongPair result = new LongPair();
-    final ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES * 2);
     int seed = DEFAULT_SEED;
     if (args.length > 1 && !args[1].isNil()) {
       seed = (int) args[1].convertToInteger().getLongValue();
     }
+    return _hash128(ctx.runtime, args[0].convertToString(), seed);
+  }
+
+  private static IRubyObject _hash128(final Ruby runtime, final RubyString input, final int seed) {
+    final ByteList bytes = input.getByteList();
+    final LongPair result = new LongPair();
+    final ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES * 2);
     murmurhash3_x64_128(bytes.unsafeBytes(), bytes.begin(), bytes.length(), seed, result);
     buffer.order(ByteOrder.LITTLE_ENDIAN);
     buffer.putLong(result.val1);
     buffer.putLong(result.val2);
     buffer.flip();
-    return RubyBignum.newBignum(ctx.runtime, new BigInteger(buffer.array()));
+    return RubyBignum.newBignum(runtime, new BigInteger(buffer.array()));
   }
 
   /*
