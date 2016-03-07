@@ -108,7 +108,7 @@ public class MurmurHash3 extends RubyObject {
   private static IRubyObject _hash128(final Ruby runtime, final RubyString input, final int seed) {
     final ByteList bytes = input.getByteList();
     final LongPair result = new LongPair();
-    final ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES * 2);
+    final ByteBuffer buffer = ByteBuffer.allocate(Long.SIZE/8 * 2);
     murmurhash3_x64_128(bytes.unsafeBytes(), bytes.begin(), bytes.length(), seed, result);
     buffer.order(ByteOrder.LITTLE_ENDIAN);
     buffer.putLong(result.val1);
